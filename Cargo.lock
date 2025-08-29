@@ -8590,7 +8590,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sui_rust_learn"
+name = "sui_rust_wallet"
 version = "0.1.0"
 dependencies = [
  "anyhow",
