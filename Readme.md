@@ -1,0 +1,1 @@
+https://sui-devnet-endpoint.blockvision.org
