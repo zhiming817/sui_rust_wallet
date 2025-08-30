@@ -1,6 +1,6 @@
 # Sui Rust Wallet
 
-轻量级的 Sui PC钱包示例，用 Rust 编写，演示如何与 Sui Devnet、Testnet 和 Mainnet 交互。支持导入私钥、查看余额和刷新余额等功能。
+轻量级的 Sui PC端钱包，用 Rust 编写，演示如何与 Sui Devnet、Testnet 和 Mainnet 交互。支持导入私钥、查看余额和刷新余额等功能。
 
 ## 功能
 
@@ -9,7 +9,6 @@
 - 切换网络（Devnet、Testnet、Mainnet）
 - 异步余额刷新
 - 简单的 GUI 界面（使用 egui）
-
 ## 快速开始
 
 ### 先决条件
@@ -66,6 +65,61 @@ cargo fmt
 ```sh
 cargo audit
 ```
+
+## 程序打包
+
+### 1制作图标
+ 下面是制作 macOS .icns 的常用方法（推荐使用系统自带的 iconutil + sips），以及可选的 ImageMagick 方案和注意事项。
+
+步骤概览
+
+准备一张方形高分辨率源图（推荐 1024×1024 PNG，带透明通道）。
+生成 .iconset 目录并把不同尺寸的 PNG 放进去（按 macOS 要求命名）。
+用 iconutil 将 .iconset 打包为 .icns。
+终端脚本：icon.sh（macOS，假设源文件 icon_1024.png）
+```sh
+#!/bin/bash
+# 生成 icns 的示例脚本
+SRC="icon_1024.png"
+ICONSET="AppIcon.iconset"
+OUT_ICNS="MyApp.icns"
+
+# 清理并创建 iconset 目录
+rm -rf "$ICONSET"
+mkdir -p "$ICONSET"
+
+# 使用 sips 生成各尺寸（sips -z 高 宽）
+sips -z 16 16    "$SRC" --out "$ICONSET/icon_16x16.png"
+sips -z 32 32    "$SRC" --out "$ICONSET/icon_16x16@2x.png"
+sips -z 32 32    "$SRC" --out "$ICONSET/icon_32x32.png"
+sips -z 64 64    "$SRC" --out "$ICONSET/icon_32x32@2x.png"
+sips -z 128 128  "$SRC" --out "$ICONSET/icon_128x128.png"
+sips -z 256 256  "$SRC" --out "$ICONSET/icon_128x128@2x.png"
+sips -z 256 256  "$SRC" --out "$ICONSET/icon_256x256.png"
+sips -z 512 512  "$SRC" --out "$ICONSET/icon_256x256@2x.png"
+sips -z 512 512  "$SRC" --out "$ICONSET/icon_512x512.png"
+# 1024x1024 为 @2x 的 512
+sips -z 1024 1024 "$SRC" --out "$ICONSET/icon_512x512@2x.png"
+
+# 打包为 icns
+iconutil -c icns "$ICONSET" -o "$OUT_ICNS"
+
+# 可选：删除临时目录
+rm -rf "$ICONSET"
+
+echo "生成: $OUT_ICNS"
+```
+### 2安装工具（若未安装）：
+```
+cargo install cargo-bundle
+```
+从项目根运行（无需额外参数）：
+```
+cargo bundle --release
+```
+生成结果通常在：
+
+target/release/bundle/osx/ 下包含 Sui Rust Wallet.app
 
 ## 使用说明
 

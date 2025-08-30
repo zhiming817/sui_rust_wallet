@@ -13,3 +13,11 @@ serde_json = "1.0.143"
 eframe = "0.32.1"
 egui = "0.32.1"
 fastcrypto = "0.1.9"
+rand_core = { version = "0.9.3", features = ["std"] }
+argon2 = "0.5.3"
+dirs = "6.0.0"
+
+[package.metadata.bundle]
+name = "Sui Rust Wallet"
+identifier = "com.zhiming.sui_rust_wallet"
+icon = ["assets/MyApp.icns"]
