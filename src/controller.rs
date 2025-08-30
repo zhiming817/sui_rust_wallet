@@ -70,6 +70,21 @@ pub fn handle_async_results(model: &mut Model) {
     }
 }
 
+// 新增：处理设置密码请求（由 UI 触发）
+pub fn handle_set_password(model: &mut Model) -> Result<(), String> {
+    model.set_password()
+}
+
+// 新增：处理验证密码请求（由 UI 触发）
+pub fn handle_verify_password(model: &mut Model) -> Result<(), String> {
+    let attempt = model.password_input.clone();
+    match model.verify_password(&attempt) {
+        Ok(true) => Ok(()),
+        Ok(false) => Err("密码错误".into()),
+        Err(e) => Err(e),
+    }
+}
+
 // --- 异步逻辑 ---
 
 /// 异步获取SUI代币余额

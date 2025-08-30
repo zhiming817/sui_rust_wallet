@@ -8,6 +8,13 @@ use view::ViewAction; // 导入 ViewAction 枚举
 
 impl App for Model {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut Frame) {
+        // 新增：未认证时显示密码面板（首次设置或登录）
+        if !self.is_authenticated {
+            view::show_password_panel(self, ctx);
+            ctx.request_repaint();
+            return;
+        }
+
         // Controller: 处理后台消息
         controller::handle_async_results(self);
 
