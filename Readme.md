@@ -1,6 +1,6 @@
 # Sui Rust Wallet
 
-轻量级的 Sui PC端钱包，用 Rust 编写，演示如何与 Sui Devnet、Testnet 和 Mainnet 交互。支持导入私钥、查看余额和刷新余额等功能。
+轻量级的 Sui PC端钱包，用 Rust 编写，演示如何与 Sui Devnet、Testnet 和 Mainnet 交互。支持导入私钥、查看余额和刷新余额等功能。本钱包没进过全面的安全测试，请勿用来和Mainnet交互，仅用于研究学习。
 
 ## 功能
 
