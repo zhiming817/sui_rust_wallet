@@ -57,7 +57,7 @@ fn init_translations() -> &'static HashMap<&'static str, HashMap<&'static str, &
         en.insert("login_button", "Login");
         en.insert("exit_button", "Exit");
         en.insert("password_info", "The password will be encrypted with the Argon2 algorithm and saved in the local configuration directory.");
-        en.insert("network_label", "Network:");
+        en.insert("network_label", "Network");
         en.insert("devnet", "Devnet");
         en.insert("testnet", "Testnet");
         en.insert("mainnet", "Mainnet");
@@ -68,7 +68,7 @@ fn init_translations() -> &'static HashMap<&'static str, HashMap<&'static str, &
         en.insert("balance_label", "Balance:");
         en.insert("refresh_balance_button", "Refresh Balance");
         en.insert("logout_button", "Logout");
-        en.insert("language_label", "Language:");
+        en.insert("language_label", "Language");
         // Error messages
         en.insert("password_empty_error", "Password cannot be empty");
         en.insert("password_mismatch_error", "The two passwords entered do not match");
@@ -92,7 +92,7 @@ fn init_translations() -> &'static HashMap<&'static str, HashMap<&'static str, &
         zh.insert("login_button", "登录");
         zh.insert("exit_button", "退出");
         zh.insert("password_info", "密码将使用Argon2算法加密并保存在本地配置目录中。");
-        zh.insert("network_label", "网络：");
+        zh.insert("network_label", "网络");
         zh.insert("devnet", "开发网");
         zh.insert("testnet", "测试网");
         zh.insert("mainnet", "主网");
@@ -103,7 +103,7 @@ fn init_translations() -> &'static HashMap<&'static str, HashMap<&'static str, &
         zh.insert("balance_label", "余额：");
         zh.insert("refresh_balance_button", "刷新余额");
         zh.insert("logout_button", "退出登录");
-        zh.insert("language_label", "语言：");
+        zh.insert("language_label", "语言");
         // Error messages
         zh.insert("password_empty_error", "密码不能为空");
         zh.insert("password_mismatch_error", "两次输入的密码不一致");

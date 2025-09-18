@@ -77,32 +77,36 @@ pub fn show_password_panel(model: &mut Model, ctx: &egui::Context) {
 pub fn show(model: &mut Model, ctx: &egui::Context) -> ViewAction {
     let mut action = ViewAction::None;
 
+    // 菜单栏
+    egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
+        egui::menu::bar(ui, |ui| {
+            ui.menu_button(&model.i18n.tr("language_label"), |ui| {
+                for lang in Language::all() {
+                    if ui.selectable_label(model.current_language() == lang, lang.display_name()).clicked() {
+                        if lang != model.current_language() {
+                            action = ViewAction::LanguageChanged(lang);
+                        }
+                    }
+                }
+            });
+            
+            ui.menu_button(&model.i18n.tr("network_label"), |ui| {
+                if ui.selectable_label(model.network == Network::Devnet, &model.i18n.tr("devnet")).clicked() {
+                    model.network = Network::Devnet;
+                }
+                if ui.selectable_label(model.network == Network::Testnet, &model.i18n.tr("testnet")).clicked() {
+                    model.network = Network::Testnet;
+                }
+                if ui.selectable_label(model.network == Network::Mainnet, &model.i18n.tr("mainnet")).clicked() {
+                    model.network = Network::Mainnet;
+                }
+            });
+        });
+    });
+
     egui::CentralPanel::default().show(ctx, |ui| {
         ui.heading(&model.i18n.tr("app_title"));
         ui.add_space(10.0);
-
-        // --- 语言切换器 ---
-        ui.horizontal(|ui| {
-            ui.label(&model.i18n.tr("language_label"));
-            let mut current_lang = model.current_language();
-            for lang in Language::all() {
-                if ui.selectable_value(&mut current_lang, lang, lang.display_name()).clicked() {
-                    if lang != model.current_language() {
-                        action = ViewAction::LanguageChanged(lang);
-                    }
-                }
-            }
-        });
-        ui.separator();
-
-        // --- 网络切换器 ---
-        ui.horizontal(|ui| {
-            ui.label(&model.i18n.tr("network_label"));
-            ui.selectable_value(&mut model.network, Network::Devnet, &model.i18n.tr("devnet"));
-            ui.selectable_value(&mut model.network, Network::Testnet, &model.i18n.tr("testnet"));
-            ui.selectable_value(&mut model.network, Network::Mainnet, &model.i18n.tr("mainnet"));
-        });
-        ui.separator();
 
         // 根据钱包状态显示不同视图
         match &mut model.wallet {
