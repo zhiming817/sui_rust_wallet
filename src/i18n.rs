@@ -90,6 +90,53 @@ fn init_translations() -> &'static HashMap<&'static str, HashMap<&'static str, &
         en.insert("async_error", "Error");
         // App messages
         en.insert("welcome_first_run", "Welcome! Please set up your password to get started.");
+        // New view module translations
+        en.insert("import_wallet_title", "Import Wallet");
+        en.insert("private_key_hint", "Enter your private key here...");
+        en.insert("supported_formats", "Supported formats:");
+        en.insert("format_help_title", "Supported Key Formats");
+        en.insert("format_help_bech32", "Bech32 format:");
+        en.insert("format_help_base64", "Base64 format:");
+        en.insert("format_help_hex", "Hex format:");
+        en.insert("valid_format", "Valid format");
+        en.insert("invalid_format", "Invalid format");
+        en.insert("format_status", "Format:");
+        en.insert("security_warning_title", "Security Warning");
+        en.insert("security_warning_message", "Never share your private key with anyone!");
+        en.insert("copy_address_button", "Copy Address");
+        en.insert("balance_unknown", "Unknown");
+        en.insert("loading", "Loading...");
+        en.insert("tools_label", "Tools");
+        en.insert("clear_cache", "Clear Cache");
+        en.insert("export_logs", "Export Logs");
+        en.insert("about", "About");
+        en.insert("status_loading", "Loading...");
+        en.insert("status_connected", "Connected");
+        en.insert("status_no_wallet", "No Wallet");
+        en.insert("current_language", "Current Language");
+        en.insert("quick_actions", "Quick Actions");
+        en.insert("settings", "Settings");
+        en.insert("copy", "Copy");
+        en.insert("paste", "Paste");
+        en.insert("select_all", "Select All");
+        en.insert("keyboard_shortcuts", "Keyboard Shortcuts");
+        en.insert("refresh", "Refresh");
+        en.insert("close", "Close");
+        en.insert("balance_title", "Balance");
+        en.insert("balance_error", "Balance Error");
+        en.insert("retry_button", "Retry");
+        en.insert("current_balance", "Current Balance");
+        en.insert("estimated_value", "Estimated Value");
+        en.insert("network_fee", "Network Fee");
+        en.insert("send_button", "Send");
+        en.insert("receive_button", "Receive");
+        en.insert("transaction_history", "Transaction History");
+        en.insert("no_transactions", "No transactions yet");
+        en.insert("view_explorer", "View in Explorer");
+        en.insert("balance_chart", "Balance Chart");
+        en.insert("chart_placeholder", "Chart coming soon...");
+        en.insert("low_balance_warning", "Low Balance Warning");
+        en.insert("consider_adding_funds", "Consider adding more funds");
         translations.insert("en", en);
 
         // Chinese translations
@@ -137,6 +184,53 @@ fn init_translations() -> &'static HashMap<&'static str, HashMap<&'static str, &
         zh.insert("async_error", "错误");
         // App messages
         zh.insert("welcome_first_run", "欢迎！请设置您的密码以开始使用。");
+        // New view module translations
+        zh.insert("import_wallet_title", "导入钱包");
+        zh.insert("private_key_hint", "在此输入您的私钥...");
+        zh.insert("supported_formats", "支持的格式:");
+        zh.insert("format_help_title", "支持的密钥格式");
+        zh.insert("format_help_bech32", "Bech32 格式:");
+        zh.insert("format_help_base64", "Base64 格式:");
+        zh.insert("format_help_hex", "十六进制格式:");
+        zh.insert("valid_format", "有效格式");
+        zh.insert("invalid_format", "无效格式");
+        zh.insert("format_status", "格式:");
+        zh.insert("security_warning_title", "安全警告");
+        zh.insert("security_warning_message", "绝不要与任何人分享您的私钥！");
+        zh.insert("copy_address_button", "复制地址");
+        zh.insert("balance_unknown", "未知");
+        zh.insert("loading", "加载中...");
+        zh.insert("tools_label", "工具");
+        zh.insert("clear_cache", "清除缓存");
+        zh.insert("export_logs", "导出日志");
+        zh.insert("about", "关于");
+        zh.insert("status_loading", "加载中...");
+        zh.insert("status_connected", "已连接");
+        zh.insert("status_no_wallet", "无钱包");
+        zh.insert("current_language", "当前语言");
+        zh.insert("quick_actions", "快速操作");
+        zh.insert("settings", "设置");
+        zh.insert("copy", "复制");
+        zh.insert("paste", "粘贴");
+        zh.insert("select_all", "全选");
+        zh.insert("keyboard_shortcuts", "键盘快捷键");
+        zh.insert("refresh", "刷新");
+        zh.insert("close", "关闭");
+        zh.insert("balance_title", "余额");
+        zh.insert("balance_error", "余额错误");
+        zh.insert("retry_button", "重试");
+        zh.insert("current_balance", "当前余额");
+        zh.insert("estimated_value", "估算价值");
+        zh.insert("network_fee", "网络费用");
+        zh.insert("send_button", "发送");
+        zh.insert("receive_button", "接收");
+        zh.insert("transaction_history", "交易历史");
+        zh.insert("no_transactions", "暂无交易记录");
+        zh.insert("view_explorer", "在浏览器中查看");
+        zh.insert("balance_chart", "余额图表");
+        zh.insert("chart_placeholder", "图表即将推出...");
+        zh.insert("low_balance_warning", "余额不足警告");
+        zh.insert("consider_adding_funds", "建议添加更多资金");
         translations.insert("zh-CN", zh);
 
         translations
