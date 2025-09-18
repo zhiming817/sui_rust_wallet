@@ -80,7 +80,7 @@ pub fn handle_verify_password(model: &mut Model) -> Result<(), String> {
     let attempt = model.password_input.clone();
     match model.verify_password(&attempt) {
         Ok(true) => Ok(()),
-        Ok(false) => Err("密码错误".into()),
+        Ok(false) => Err(model.i18n.tr("password_error")),
         Err(e) => Err(e),
     }
 }

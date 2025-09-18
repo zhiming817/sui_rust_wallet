@@ -1,0 +1,33 @@
+# English translations
+app_title: "Simple Sui Wallet"
+login_title: "Sui Rust Wallet - Login"
+
+# Login page
+first_run_message: "First run: Please set a password (for local encryption)"
+enter_password: "Enter password"
+confirm_password: "Confirm password"
+create_password_button: "Create Password and Enter"
+login_message: "Please enter your password to log in"
+login_button: "Login"
+exit_button: "Exit"
+password_info: "The password will be encrypted with the Argon2 algorithm and saved in the local configuration directory."
+
+# Main interface
+network_label: "Network:"
+devnet: "Devnet"
+testnet: "Testnet"
+mainnet: "Mainnet"
+
+# Wallet
+import_wallet_message: "Import your wallet using a Base64 private key:"
+import_wallet_button: "Import Wallet"
+wallet_loaded: "Wallet Loaded"
+address_label: "Address:"
+balance_label: "Balance:"
+refresh_balance_button: "Refresh Balance"
+logout_button: "Logout"
+
+# Language
+language_label: "Language:"
+english: "English"
+chinese: "中文"

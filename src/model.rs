@@ -2,6 +2,7 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use sui_sdk::types::{base_types::SuiAddress, crypto::SuiKeyPair};
 use tokio::runtime::Runtime;
 use std::{fs, path::PathBuf};
+use crate::i18n::{I18nManager, Language};
 
 use argon2::{
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
@@ -56,6 +57,9 @@ pub struct Model {
     pub password_hash: Option<String>,
     pub password_file: PathBuf,
 
+    // 国际化相关
+    pub i18n: I18nManager,
+
     // 异步处理
     pub rt: Runtime,
     pub sender: Sender<Result<String, String>>,
@@ -91,6 +95,7 @@ impl Default for Model {
             password_confirm: String::new(),
             password_hash,
             password_file,
+            i18n: I18nManager::new(),
             rt: Runtime::new().expect("Failed to create Tokio runtime"),
             sender,
             receiver,
@@ -99,14 +104,22 @@ impl Default for Model {
 }
 
 impl Model {
+    pub fn set_language(&mut self, language: Language) {
+        self.i18n.set_language(language);
+    }
+
+    pub fn current_language(&self) -> Language {
+        self.i18n.current_language()
+    }
+
     pub fn set_password(&mut self) -> Result<(), String> {
         let pw = self.password_input.trim();
         let pwc = self.password_confirm.trim();
         if pw.is_empty() {
-            return Err("密码不能为空".into());
+            return Err(self.i18n.tr("password_empty_error"));
         }
         if pw != pwc {
-            return Err("两次输入的密码不一致".into());
+            return Err(self.i18n.tr("password_mismatch_error"));
         }
 
         // 生成 salt 并计算 hash（argon2）
@@ -114,16 +127,16 @@ impl Model {
         let argon2 = Argon2::default();
         let password_hash = argon2
             .hash_password(pw.as_bytes(), &salt)
-            .map_err(|e| format!("hash error: {}", e))?
+            .map_err(|e| self.i18n.tr("hash_error").replace("{}", &e.to_string()))?
             .to_string();
 
         // 确保存储目录存在并写入
         if let Some(parent) = self.password_file.parent() {
             if let Err(e) = fs::create_dir_all(parent) {
-                return Err(format!("创建目录失败: {}", e));
+                return Err(self.i18n.tr("create_dir_error").replace("{}", &e.to_string()));
             }
         }
-        fs::write(&self.password_file, &password_hash).map_err(|e| format!("写入失败: {}", e))?;
+        fs::write(&self.password_file, &password_hash).map_err(|e| self.i18n.tr("write_error").replace("{}", &e.to_string()))?;
 
         self.password_hash = Some(password_hash);
         self.is_first_run = false;
@@ -143,12 +156,12 @@ impl Model {
                         self.password_hash = Some(s.clone());
                         s
                     }
-                    _ => return Err("未找到已保存的密码".into()),
+                    _ => return Err(self.i18n.tr("password_not_found_error")),
                 }
             }
         };
 
-        let parsed = PasswordHash::new(&stored).map_err(|e| format!("解析 hash 失败: {}", e))?;
+        let parsed = PasswordHash::new(&stored).map_err(|e| self.i18n.tr("parse_hash_error").replace("{}", &e.to_string()))?;
         let argon2 = Argon2::default();
         match argon2.verify_password(attempt.as_bytes(), &parsed) {
             Ok(()) => {

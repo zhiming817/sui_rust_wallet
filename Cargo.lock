@@ -8661,6 +8661,7 @@ dependencies = [
  "egui",
  "fastcrypto 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand_core 0.9.3",
+ "serde",
  "serde_json",
  "sui-keys",
  "sui-sdk",

@@ -1,0 +1,33 @@
+# Chinese translations
+app_title: "简单Sui钱包"
+login_title: "Sui Rust钱包 - 登录"
+
+# Login page
+first_run_message: "首次运行：请设置密码（用于本地加密）"
+enter_password: "输入密码"
+confirm_password: "确认密码"
+create_password_button: "创建密码并进入"
+login_message: "请输入您的密码以登录"
+login_button: "登录"
+exit_button: "退出"
+password_info: "密码将使用Argon2算法加密并保存在本地配置目录中。"
+
+# Main interface
+network_label: "网络："
+devnet: "开发网"
+testnet: "测试网"
+mainnet: "主网"
+
+# Wallet
+import_wallet_message: "使用Base64私钥导入您的钱包："
+import_wallet_button: "导入钱包"
+wallet_loaded: "钱包已加载"
+address_label: "地址："
+balance_label: "余额："
+refresh_balance_button: "刷新余额"
+logout_button: "退出登录"
+
+# Language
+language_label: "语言："
+english: "English"
+chinese: "中文"

@@ -1,6 +1,7 @@
 mod controller;
 mod model;
 mod view;
+mod i18n;
 
 use eframe::{egui, App, Frame};
 use model::Model;
@@ -27,6 +28,7 @@ impl App for Model {
                 ViewAction::ImportKey => controller::handle_import_key(self),
                 ViewAction::RefreshBalance => controller::handle_refresh_balance(self),
                 ViewAction::Logout => controller::handle_logout(self),
+                ViewAction::LanguageChanged(lang) => self.set_language(lang),
                 ViewAction::None => {}
             }
         }
@@ -41,10 +43,33 @@ fn main() -> Result<(), eframe::Error> {
         viewport: egui::ViewportBuilder::default().with_inner_size([550.0, 450.0]),
         ..Default::default()
     };
+
+    let model = Model::default();
+    let window_title = model.i18n.tr("app_title");
+
     eframe::run_native(
-        "Simple Sui Wallet", // 更新窗口标题
+        &window_title,
         options,
-        Box::new(|_cc| Ok(Box::<Model>::default())),
+        Box::new(|cc| {
+            // 字体设置 - 使用 egui 内置字体支持中文
+            let ctx = &cc.egui_ctx;
+            let mut fonts = egui::FontDefinitions::default();
+            
+            // 尝试加载字体文件，如果失败则使用系统字体
+            if let Ok(font_data) = std::fs::read("assets/NotoSansSC-Regular.ttf") {
+                fonts.font_data.insert(
+                    "noto_sans_sc".to_owned(),
+                    egui::FontData::from_owned(font_data).into(),
+                );
+                // 将中文字体设为首选
+                fonts.families.entry(egui::FontFamily::Proportional).or_default().insert(0, "noto_sans_sc".to_owned());
+                fonts.families.entry(egui::FontFamily::Monospace).or_default().insert(0, "noto_sans_sc".to_owned());
+            }
+            
+            ctx.set_fonts(fonts);
+
+            Ok(Box::new(Model::default()))
+        }),
     )
 }
 
