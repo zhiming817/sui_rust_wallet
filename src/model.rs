@@ -80,12 +80,15 @@ impl Default for Model {
             _ => (true, None),
         };
 
+        let i18n_manager = I18nManager::new();
+        let import_message = i18n_manager.tr("import_private_key_message");
+
         Self {
             wallet: WalletState::NoWallet {
                 private_key_input: "".to_string(),
             },
             network: Network::Devnet,
-            result_text: "Please import a private key to begin.".to_string(),
+            result_text: import_message,
             is_loading: false,
             recipient_address: "".to_string(),
             transfer_amount: "".to_string(),
@@ -95,7 +98,7 @@ impl Default for Model {
             password_confirm: String::new(),
             password_hash,
             password_file,
-            i18n: I18nManager::new(),
+            i18n: i18n_manager,
             rt: Runtime::new().expect("Failed to create Tokio runtime"),
             sender,
             receiver,

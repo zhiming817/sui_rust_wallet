@@ -78,6 +78,8 @@ fn init_translations() -> &'static HashMap<&'static str, HashMap<&'static str, &
         en.insert("password_not_found_error", "No saved password found");
         en.insert("parse_hash_error", "Failed to parse hash: {}");
         en.insert("password_error", "Password error");
+        // Default messages
+        en.insert("import_private_key_message", "Please import a private key to begin.");
         translations.insert("en", en);
 
         // Chinese translations
@@ -113,6 +115,8 @@ fn init_translations() -> &'static HashMap<&'static str, HashMap<&'static str, &
         zh.insert("password_not_found_error", "未找到已保存的密码");
         zh.insert("parse_hash_error", "解析哈希失败: {}");
         zh.insert("password_error", "密码错误");
+        // Default messages
+        zh.insert("import_private_key_message", "请导入私钥以开始使用。");
         translations.insert("zh-CN", zh);
 
         translations
