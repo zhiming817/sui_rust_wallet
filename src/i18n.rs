@@ -80,6 +80,16 @@ fn init_translations() -> &'static HashMap<&'static str, HashMap<&'static str, &
         en.insert("password_error", "Password error");
         // Default messages
         en.insert("import_private_key_message", "Please import a private key to begin.");
+        // Wallet messages
+        en.insert("wallet_imported_success", "Wallet imported successfully for address");
+        en.insert("import_private_key_failed", "Failed to import private key. Please check the format (Bech32 or Base64).");
+        en.insert("wallet_logged_out_message", "Wallet logged out. Import a key to begin.");
+        // Balance messages
+        en.insert("refreshing_balance", "Refreshing balance...");
+        en.insert("no_wallet_loaded", "No wallet loaded. Please import a key first.");
+        en.insert("async_error", "Error");
+        // App messages
+        en.insert("welcome_first_run", "Welcome! Please set up your password to get started.");
         translations.insert("en", en);
 
         // Chinese translations
@@ -117,6 +127,16 @@ fn init_translations() -> &'static HashMap<&'static str, HashMap<&'static str, &
         zh.insert("password_error", "密码错误");
         // Default messages
         zh.insert("import_private_key_message", "请导入私钥以开始使用。");
+        // Wallet messages
+        zh.insert("wallet_imported_success", "钱包导入成功，地址为");
+        zh.insert("import_private_key_failed", "导入私钥失败。请检查格式（Bech32 或 Base64）。");
+        zh.insert("wallet_logged_out_message", "钱包已退出。请导入私钥以开始使用。");
+        // Balance messages
+        zh.insert("refreshing_balance", "正在刷新余额...");
+        zh.insert("no_wallet_loaded", "未加载钱包。请先导入私钥。");
+        zh.insert("async_error", "错误");
+        // App messages
+        zh.insert("welcome_first_run", "欢迎！请设置您的密码以开始使用。");
         translations.insert("zh-CN", zh);
 
         translations

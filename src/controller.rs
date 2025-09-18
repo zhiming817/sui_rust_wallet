@@ -1,110 +1,137 @@
-use crate::model::{Model, WalletState};
-use std::str::FromStr;
-use sui_sdk::{
-    // 确保导入了 KeypairTraits
-    types::{base_types::SuiAddress, crypto::{SuiKeyPair, KeypairTraits}},
-    SuiClientBuilder,
-};
+// 主控制器 - 协调各个子控制器
+use crate::model::Model;
 
-// --- 动作处理 ---
+// 导入子控制器
+pub mod auth_controller;
+pub mod wallet_controller;
+pub mod balance_controller;
 
-/// 处理私钥导入逻辑
+// 重新导出控制器以便外部使用
+pub use auth_controller::AuthController;
+pub use wallet_controller::WalletController;
+pub use balance_controller::BalanceController;
+
+/// 主控制器 - 提供统一的入口点来协调各个子控制器
+pub struct MainController;
+
+impl MainController {
+    // --- 认证相关功能代理 ---
+    
+    /// 处理登出逻辑
+    pub fn handle_logout(model: &mut Model) {
+        AuthController::handle_logout(model);
+    }
+
+    /// 处理设置密码请求
+    pub fn handle_set_password(model: &mut Model) -> Result<(), String> {
+        AuthController::handle_set_password(model)
+    }
+
+    /// 处理验证密码请求
+    pub fn handle_verify_password(model: &mut Model) -> Result<(), String> {
+        AuthController::handle_verify_password(model)
+    }
+
+    // --- 钱包相关功能代理 ---
+    
+    /// 处理私钥导入逻辑
+    pub fn handle_import_key(model: &mut Model) {
+        WalletController::handle_import_key(model);
+    }
+
+    // --- 余额相关功能代理 ---
+    
+    /// 处理刷新余额的请求
+    pub fn handle_refresh_balance(model: &mut Model) {
+        BalanceController::handle_refresh_balance(model);
+    }
+
+    /// 处理从后台线程接收到的异步结果
+    pub fn handle_async_results(model: &mut Model) {
+        BalanceController::handle_async_results(model);
+    }
+
+    // --- 应用程序级别的协调功能 ---
+
+    /// 处理应用程序初始化
+    pub fn initialize_app(model: &mut Model) {
+        // 如果是首次运行，可以进行一些初始化操作
+        if model.is_first_run {
+            model.result_text = model.i18n.tr("welcome_first_run");
+        } else {
+            model.result_text = model.i18n.tr("import_private_key_message");
+        }
+    }
+
+    /// 处理语言切换
+    pub fn handle_language_change(model: &mut Model) {
+        // 更新结果文本以反映新语言
+        if WalletController::is_wallet_loaded(model) {
+            if let Some(address) = WalletController::get_wallet_address(model) {
+                model.result_text = format!("{}: {}", model.i18n.tr("wallet_imported_success"), address);
+            }
+        } else {
+            model.result_text = model.i18n.tr("import_private_key_message");
+        }
+    }
+
+    /// 处理网络切换
+    pub fn handle_network_change(model: &mut Model) {
+        // 如果钱包已加载，切换网络后需要刷新余额
+        if WalletController::is_wallet_loaded(model) {
+            Self::handle_refresh_balance(model);
+        }
+    }
+
+    /// 获取应用程序状态摘要
+    pub fn get_app_status(model: &Model) -> AppStatus {
+        AppStatus {
+            is_authenticated: AuthController::is_authenticated(model),
+            wallet_loaded: WalletController::is_wallet_loaded(model),
+            is_loading: BalanceController::is_loading(model),
+            wallet_address: WalletController::get_wallet_address(model),
+        }
+    }
+}
+
+/// 应用程序状态摘要
+#[derive(Debug, Clone)]
+pub struct AppStatus {
+    pub is_authenticated: bool,
+    pub wallet_loaded: bool,
+    pub is_loading: bool,
+    pub wallet_address: Option<sui_sdk::types::base_types::SuiAddress>,
+}
+
+// --- 向后兼容性函数 ---
+// 为了不破坏现有代码，提供向后兼容的函数
+
+/// 处理私钥导入逻辑（向后兼容）
 pub fn handle_import_key(model: &mut Model) {
-    if let WalletState::NoWallet { private_key_input } = &model.wallet {
-        let trimmed_input = private_key_input.trim();
-
-        // 1. 尝试使用 `decode` 解析 Bech32 格式 (suiprivkey1...)
-        // 2. 如果失败，则回退尝试使用 `decode_base64` 解析 Base64 格式
-        let keypair_result = SuiKeyPair::decode(trimmed_input);
-            
-
-        match keypair_result {
-            Ok(keypair) => {
-                let address: SuiAddress = (&keypair.public()).into();
-                model.wallet = WalletState::Loaded { address, keypair };
-                model.result_text = format!("Wallet imported successfully for address: {}", address);
-                // 导入成功后自动刷新余额
-                handle_refresh_balance(model);
-            }
-            Err(_) => {
-                model.result_text = "Failed to import private key. Please check the format (Bech32 or Base64).".to_string();
-            }
-        }
-    }
+    MainController::handle_import_key(model);
 }
 
-/// 处理登出逻辑
+/// 处理登出逻辑（向后兼容）
 pub fn handle_logout(model: &mut Model) {
-    model.wallet = WalletState::NoWallet {
-        private_key_input: "".to_string(),
-    };
-    model.result_text = "Wallet logged out. Import a key to begin.".to_string();
+    MainController::handle_logout(model);
 }
 
-/// 处理刷新余额的请求
+/// 处理刷新余额的请求（向后兼容）
 pub fn handle_refresh_balance(model: &mut Model) {
-    if let WalletState::Loaded { address, .. } = &model.wallet {
-        model.is_loading = true;
-        model.result_text = "Refreshing balance...".to_string();
-        let sender = model.sender.clone();
-        let address = *address;
-        let network_url = model.network.url();
-
-        model.rt.spawn(async move {
-            let result = fetch_balance(address, network_url).await;
-            sender.send(result).expect("Failed to send message");
-        });
-    } else {
-        model.result_text = "No wallet loaded. Please import a key first.".to_string();
-    }
+    MainController::handle_refresh_balance(model);
 }
 
-/// 处理从后台线程接收到的异步结果
+/// 处理从后台线程接收到的异步结果（向后兼容）
 pub fn handle_async_results(model: &mut Model) {
-    if let Ok(result) = model.receiver.try_recv() {
-        model.is_loading = false;
-        match result {
-            Ok(message) => model.result_text = message,
-            Err(e) => model.result_text = format!("Error: {}", e),
-        }
-    }
+    MainController::handle_async_results(model);
 }
 
-// 新增：处理设置密码请求（由 UI 触发）
+/// 处理设置密码请求（向后兼容）
 pub fn handle_set_password(model: &mut Model) -> Result<(), String> {
-    model.set_password()
+    MainController::handle_set_password(model)
 }
 
-// 新增：处理验证密码请求（由 UI 触发）
+/// 处理验证密码请求（向后兼容）
 pub fn handle_verify_password(model: &mut Model) -> Result<(), String> {
-    let attempt = model.password_input.clone();
-    match model.verify_password(&attempt) {
-        Ok(true) => Ok(()),
-        Ok(false) => Err(model.i18n.tr("password_error")),
-        Err(e) => Err(e),
-    }
-}
-
-// --- 异步逻辑 ---
-
-/// 异步获取SUI代币余额
-async fn fetch_balance(address: SuiAddress, network_url: &str) -> Result<String, String> {
-    let sui_client = SuiClientBuilder::default()
-        .build(network_url)
-        .await
-        .map_err(|e| e.to_string())?;
-    let balances = sui_client
-        .coin_read_api()
-        .get_all_balances(address)
-        .await
-        .map_err(|e| e.to_string())?;
-
-    // 只查找并显示 SUI 代币的余额
-    let sui_balance = balances.iter().find(|b| b.coin_type == "0x2::sui::SUI");
-    if let Some(balance) = sui_balance {
-        let amount = balance.total_balance as f64 / 1_000_000_000.0;
-        Ok(format!("{:.4} SUI", amount))
-    } else {
-        Ok("0.0000 SUI".to_string())
-    }
+    MainController::handle_verify_password(model)
 }
