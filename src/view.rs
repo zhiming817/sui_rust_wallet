@@ -38,7 +38,19 @@ pub fn show_password_panel(model: &mut Model, ctx: &egui::Context) {
                 ui.label(&model.i18n.tr("login_message"));
                 ui.add(egui::TextEdit::singleline(&mut model.password_input).password(true).hint_text(&model.i18n.tr("enter_password")));
                 ui.add_space(6.0);
+                // 按钮居中对齐
                 ui.horizontal(|ui| {
+                    // 计算居中需要的空间
+                    let available_width = ui.available_width();
+                    let button_width = 60.0; // 按钮宽度估算
+                    let spacing = 10.0; // 按钮间距
+                    let total_buttons_width = button_width * 2.0 + spacing;
+                    let left_padding = (available_width - total_buttons_width) / 2.0;
+                    
+                    if left_padding > 0.0 {
+                        ui.add_space(left_padding);
+                    }
+                    
                     if ui.button(&model.i18n.tr("login_button")).clicked() {
                         // Call controller to verify password
                         if let Err(err) = controller::handle_verify_password(model) {
@@ -47,6 +59,7 @@ pub fn show_password_panel(model: &mut Model, ctx: &egui::Context) {
                         // Clear input to prevent leaks
                         model.password_input.clear();
                     }
+                    ui.add_space(10.0); // 按钮之间的间距
                     if ui.button(&model.i18n.tr("exit_button")).clicked() {
                         // Close the application directly: the simple way is to exit the process
                         std::process::exit(0);
