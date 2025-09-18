@@ -164,9 +164,9 @@ impl MenuView {
         };
         
         let color = match model.network {
-            Network::Devnet => egui::Color32::BLUE,
-            Network::Testnet => egui::Color32::YELLOW,
-            Network::Mainnet => egui::Color32::GREEN,
+            Network::Devnet => egui::Color32::BLACK,
+            Network::Testnet => egui::Color32::BLACK,
+            Network::Mainnet => egui::Color32::BLACK,
         };
         
         ui.colored_label(color, network_text)
