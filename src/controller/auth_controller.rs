@@ -17,29 +17,40 @@ impl AuthController {
         model.set_password()
     }
 
-    /// 处理验证密码请求（由 UI 触发）
-    pub fn handle_verify_password(model: &mut Model) -> Result<(), String> {
-        let attempt = model.password_input.clone();
+    /// 处理登录
+    pub fn handle_login(model: &mut crate::model::Model) -> Result<(), String> {
+        let attempt = model.auth_state.password_input.clone();
+        
         match model.verify_password(&attempt) {
-            Ok(true) => Ok(()),
-            Ok(false) => Err(model.i18n.tr("password_error")),
+            Ok(true) => {
+                model.auth_state.is_authenticated = true;
+                Ok(())
+            }
+            Ok(false) => Err(model.i18n.tr("password_incorrect_error")),
             Err(e) => Err(e),
         }
     }
 
-    /// 检查用户是否已认证
-    pub fn is_authenticated(model: &Model) -> bool {
-        model.is_authenticated
+    /// 处理密码验证
+    pub fn handle_verify_password(model: &mut crate::model::Model) -> Result<(), String> {
+        Self::handle_login(model)
     }
 
-    /// 设置认证状态
-    pub fn set_authenticated(model: &mut Model, authenticated: bool) {
-        model.is_authenticated = authenticated;
+    /// 检查是否已认证
+    pub fn is_authenticated(model: &crate::model::Model) -> bool {
+        model.auth_state.is_authenticated && !model.auth_state.is_session_expired()
+    }
+
+    /// 登出
+    pub fn logout(model: &mut crate::model::Model) {
+        model.auth_state.is_authenticated = false;
+        model.auth_state.password_input.clear();
+        model.auth_state.password_confirm.clear();
     }
 
     /// 清除密码输入字段
-    pub fn clear_password_inputs(model: &mut Model) {
-        model.password_input.clear();
-        model.password_confirm.clear();
+    pub fn clear_password_inputs(model: &mut crate::model::Model) {
+        model.auth_state.password_input.clear();
+        model.auth_state.password_confirm.clear();
     }
 }

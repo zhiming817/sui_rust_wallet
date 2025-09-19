@@ -56,7 +56,7 @@ impl MainController {
     /// 处理应用程序初始化
     pub fn initialize_app(model: &mut Model) {
         // 如果是首次运行，可以进行一些初始化操作
-        if model.is_first_run {
+        if model.auth_state.is_first_run {
             model.result_text = model.i18n.tr("welcome_first_run");
         } else {
             model.result_text = model.i18n.tr("import_private_key_message");

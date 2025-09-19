@@ -33,7 +33,7 @@ impl MainView {
         let mut action = ViewAction::None;
 
         // 首先显示菜单栏（如果已认证）
-        if model.is_authenticated {
+        if model.auth_state.is_authenticated {
             if let Some(menu_action) = Self::show_menu_bar(model, ctx) {
                 action = menu_action;
             }

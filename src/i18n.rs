@@ -238,6 +238,7 @@ fn init_translations() -> &'static HashMap<&'static str, HashMap<&'static str, &
 }
 
 /// 国际化管理器
+#[derive(Debug)]
 pub struct I18nManager {
     current_language: Language,
 }

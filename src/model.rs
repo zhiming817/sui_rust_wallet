@@ -1,61 +1,43 @@
+// 模型协调器 - 统一导入和重新导出所有模型子模块
+// 为了向后兼容，主要结构和接口保持在此文件中
+
+mod wallet_model;
+mod network_model;
+mod auth_model;
+mod app_state;
+
+// 重新导出子模块的公共类型
+pub use wallet_model::*;
+pub use network_model::*;
+pub use auth_model::*;
+pub use app_state::*;
+
 use std::sync::mpsc::{self, Receiver, Sender};
-use sui_sdk::types::{base_types::SuiAddress, crypto::SuiKeyPair};
 use tokio::runtime::Runtime;
-use std::{fs, path::PathBuf};
 use crate::i18n::{I18nManager, Language};
 
-use argon2::{
-    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
-    Argon2,
-};
-use argon2::password_hash::rand_core::OsRng;
-
-/// 支持的网络
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum Network {
-    Devnet,
-    Testnet,
-    Mainnet,
-}
-
-impl Network {
-    pub fn url(&self) -> &'static str {
-        match self {
-            Network::Devnet => "https://fullnode.devnet.sui.io:443",
-            Network::Testnet => "https://fullnode.testnet.sui.io:443",
-            Network::Mainnet => "https://fullnode.mainnet.sui.io:443",
-        }
-    }
-}
-
-/// 钱包状态
-pub enum WalletState {
-    // 未导入钱包，存储用户输入的私钥字符串
-    NoWallet { private_key_input: String },
-    // 已加载钱包
-    Loaded {
-        address: SuiAddress,
-        keypair: SuiKeyPair,
-    },
-}
-
-/// 应用的所有状态
+/// 应用的所有状态 - 主模型结构
+/// 整合了所有子模块的功能
 pub struct Model {
+    // 钱包相关状态
     pub wallet: WalletState,
+    
+    // 网络配置
     pub network: Network,
+    
+    // 认证相关状态
+    pub auth_state: AuthState,
+    
+    // 应用程序状态
+    pub app_state: AppState,
+    
+    // UI 状态
     pub result_text: String,
     pub is_loading: bool,
+    
     // 转账信息
     pub recipient_address: String,
     pub transfer_amount: String,
-
-    // 新增密码相关字段
-    pub is_authenticated: bool,
-    pub is_first_run: bool,
-    pub password_input: String,
-    pub password_confirm: String,
-    pub password_hash: Option<String>,
-    pub password_file: PathBuf,
 
     // 国际化相关
     pub i18n: I18nManager,
@@ -69,35 +51,18 @@ pub struct Model {
 impl Default for Model {
     fn default() -> Self {
         let (sender, receiver) = mpsc::channel();
-        // 存储路径：$XDG_CONFIG_HOME/sui_rust_wallet/password.hash 或 $HOME/.config/...
-        let mut cfg_dir = dirs::config_dir().unwrap_or_else(|| std::env::current_dir().unwrap());
-        cfg_dir.push("sui_rust_wallet");
-        let mut password_file = cfg_dir.clone();
-        password_file.push("password.hash");
-
-        let (is_first_run, password_hash) = match fs::read_to_string(&password_file) {
-            Ok(s) if !s.trim().is_empty() => (false, Some(s)),
-            _ => (true, None),
-        };
-
         let i18n_manager = I18nManager::new();
         let import_message = i18n_manager.tr("import_private_key_message");
 
         Self {
-            wallet: WalletState::NoWallet {
-                private_key_input: "".to_string(),
-            },
+            wallet: WalletState::default(),
             network: Network::Devnet,
+            auth_state: AuthState::default(),
+            app_state: AppState::default(),
             result_text: import_message,
             is_loading: false,
-            recipient_address: "".to_string(),
-            transfer_amount: "".to_string(),
-            is_authenticated: false,
-            is_first_run,
-            password_input: String::new(),
-            password_confirm: String::new(),
-            password_hash,
-            password_file,
+            recipient_address: String::new(),
+            transfer_amount: String::new(),
             i18n: i18n_manager,
             rt: Runtime::new().expect("Failed to create Tokio runtime"),
             sender,
@@ -107,6 +72,7 @@ impl Default for Model {
 }
 
 impl Model {
+    // 国际化方法
     pub fn set_language(&mut self, language: Language) {
         self.i18n.set_language(language);
     }
@@ -115,63 +81,64 @@ impl Model {
         self.i18n.current_language()
     }
 
+    // 密码相关方法 - 委托给 AuthState
     pub fn set_password(&mut self) -> Result<(), String> {
-        let pw = self.password_input.trim();
-        let pwc = self.password_confirm.trim();
-        if pw.is_empty() {
-            return Err(self.i18n.tr("password_empty_error"));
-        }
-        if pw != pwc {
-            return Err(self.i18n.tr("password_mismatch_error"));
-        }
-
-        // 生成 salt 并计算 hash（argon2）
-        let salt = SaltString::generate(&mut OsRng);
-        let argon2 = Argon2::default();
-        let password_hash = argon2
-            .hash_password(pw.as_bytes(), &salt)
-            .map_err(|e| self.i18n.tr("hash_error").replace("{}", &e.to_string()))?
-            .to_string();
-
-        // 确保存储目录存在并写入
-        if let Some(parent) = self.password_file.parent() {
-            if let Err(e) = fs::create_dir_all(parent) {
-                return Err(self.i18n.tr("create_dir_error").replace("{}", &e.to_string()));
-            }
-        }
-        fs::write(&self.password_file, &password_hash).map_err(|e| self.i18n.tr("write_error").replace("{}", &e.to_string()))?;
-
-        self.password_hash = Some(password_hash);
-        self.is_first_run = false;
-        self.is_authenticated = true;
-        self.password_input.clear();
-        self.password_confirm.clear();
-        Ok(())
+        self.auth_state.set_password(&self.i18n)
     }
 
     pub fn verify_password(&mut self, attempt: &str) -> Result<bool, String> {
-        let stored = match &self.password_hash {
-            Some(h) => h.clone(),
-            None => {
-                // 尝试从文件读取（兜底）
-                match fs::read_to_string(&self.password_file) {
-                    Ok(s) if !s.trim().is_empty() => {
-                        self.password_hash = Some(s.clone());
-                        s
-                    }
-                    _ => return Err(self.i18n.tr("password_not_found_error")),
-                }
-            }
-        };
+        self.auth_state.verify_password(attempt, &self.i18n)
+    }
 
-        let parsed = PasswordHash::new(&stored).map_err(|e| self.i18n.tr("parse_hash_error").replace("{}", &e.to_string()))?;
-        let argon2 = Argon2::default();
-        match argon2.verify_password(attempt.as_bytes(), &parsed) {
-            Ok(()) => {
-                self.is_authenticated = true;
-                Ok(true)
-            }
-            Err(_) => Ok(false),
-        }
+    // 向后兼容的字段访问器
+    pub fn is_authenticated(&self) -> bool {
+        self.auth_state.is_authenticated
+    }
+
+    pub fn is_first_run(&self) -> bool {
+        self.auth_state.is_first_run
+    }
+
+    pub fn password_input(&self) -> &str {
+        &self.auth_state.password_input
+    }
+
+    pub fn password_confirm(&self) -> &str {
+        &self.auth_state.password_confirm
+    }
+
+    pub fn password_input_mut(&mut self) -> &mut String {
+        &mut self.auth_state.password_input
+    }
+
+    pub fn password_confirm_mut(&mut self) -> &mut String {
+        &mut self.auth_state.password_confirm
+    }
+
+    // 钱包相关方法委托
+    pub fn get_wallet_state(&self) -> &WalletState {
+        &self.wallet
+    }
+
+    pub fn get_wallet_state_mut(&mut self) -> &mut WalletState {
+        &mut self.wallet
+    }
+
+    // 网络相关方法委托
+    pub fn get_network(&self) -> Network {
+        self.network
+    }
+
+    pub fn set_network(&mut self, network: Network) {
+        self.network = network;
+    }
+
+    // 应用状态相关方法委托
+    pub fn get_app_settings(&self) -> &AppSettings {
+        &self.app_state.settings
+    }
+
+    pub fn get_app_settings_mut(&mut self) -> &mut AppSettings {
+        &mut self.app_state.settings
     }
 }

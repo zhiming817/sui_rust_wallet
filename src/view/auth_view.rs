@@ -13,7 +13,7 @@ impl AuthView {
                 ui.heading(&model.i18n.tr("login_title"));
                 ui.add_space(8.0);
 
-                if model.is_first_run {
+                if model.auth_state.is_first_run {
                     Self::show_password_setup(model, ui);
                 } else {
                     Self::show_login_form(model, ui);
@@ -30,13 +30,13 @@ impl AuthView {
         ui.label(&model.i18n.tr("first_run_message"));
         
         ui.add(
-            egui::TextEdit::singleline(&mut model.password_input)
+            egui::TextEdit::singleline(&mut model.auth_state.password_input)
                 .password(true)
                 .hint_text(&model.i18n.tr("enter_password"))
         );
         
         ui.add(
-            egui::TextEdit::singleline(&mut model.password_confirm)
+            egui::TextEdit::singleline(&mut model.auth_state.password_confirm)
                 .password(true)
                 .hint_text(&model.i18n.tr("confirm_password"))
         );
@@ -45,8 +45,8 @@ impl AuthView {
         
         if ui.button(&model.i18n.tr("create_password_button")).clicked() {
             if let Err(err) = controller::handle_set_password(model) {
-                model.password_input.clear();
-                model.password_confirm.clear();
+                model.auth_state.password_input.clear();
+                model.auth_state.password_confirm.clear();
                 eprintln!("Failed to set password: {}", err);
             }
         }
@@ -57,7 +57,7 @@ impl AuthView {
         ui.label(&model.i18n.tr("login_message"));
         
         ui.add(
-            egui::TextEdit::singleline(&mut model.password_input)
+            egui::TextEdit::singleline(&mut model.auth_state.password_input)
                 .password(true)
                 .hint_text(&model.i18n.tr("enter_password"))
         );
@@ -86,7 +86,7 @@ impl AuthView {
                 if let Err(err) = controller::handle_verify_password(model) {
                     eprintln!("Password verification failed: {}", err);
                 }
-                model.password_input.clear();
+                model.auth_state.password_input.clear();
             }
             
             ui.add_space(spacing);
