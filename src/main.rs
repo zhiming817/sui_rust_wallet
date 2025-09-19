@@ -25,7 +25,14 @@ impl App for Model {
         // Controller: 根据用户动作执行相应逻辑
         if !self.is_loading {
             match action {
-                ViewAction::ImportKey => controller::handle_import_key(self),
+                ViewAction::ImportKey => {
+                    // 如果用户已认证，则导入并保存私钥
+                    // 注意：这里无法直接获取密码，因为认证后会清空密码字段
+                    // 在实际应用中，我们可以在导入时询问用户是否要保存，并要求再次输入密码
+                    // 或者在会话中保持一个临时的密码副本（需要谨慎处理安全性）
+                    // 目前我们使用简单的导入，用户可以在登录时自动加载之前保存的私钥
+                    controller::handle_import_key(self);
+                },
                 ViewAction::RefreshBalance => controller::handle_refresh_balance(self),
                 ViewAction::Logout => controller::handle_logout(self),
                 ViewAction::LanguageChanged(lang) => self.set_language(lang),

@@ -16,6 +16,9 @@ fastcrypto = "0.1.9"
 rand_core = { version = "0.9.3", features = ["std"] }
 argon2 = "0.5.3"
 dirs = "6.0.0"
+# AES 加密用于私钥存储
+aes-gcm = "0.10.3"
+base64 = "0.22.1"
 # i18n dependencies
 serde = { version = "1.0", features = ["derive"] }
 

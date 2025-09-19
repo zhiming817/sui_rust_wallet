@@ -34,9 +34,14 @@ impl MainController {
 
     // --- 钱包相关功能代理 ---
     
-    /// 处理私钥导入逻辑
+    /// 处理私钥导入逻辑（不保存）
     pub fn handle_import_key(model: &mut Model) {
         WalletController::handle_import_key(model);
+    }
+    
+    /// 处理私钥导入并加密保存
+    pub fn handle_import_and_save_key(model: &mut Model, password: &str) {
+        WalletController::handle_import_and_save_key(model, password);
     }
 
     // --- 余额相关功能代理 ---
@@ -109,6 +114,11 @@ pub struct AppStatus {
 /// 处理私钥导入逻辑（向后兼容）
 pub fn handle_import_key(model: &mut Model) {
     MainController::handle_import_key(model);
+}
+
+/// 处理私钥导入并保存（向后兼容）
+pub fn handle_import_and_save_key(model: &mut Model, password: &str) {
+    MainController::handle_import_and_save_key(model, password);
 }
 
 /// 处理登出逻辑（向后兼容）

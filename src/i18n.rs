@@ -83,6 +83,9 @@ fn init_translations() -> &'static HashMap<&'static str, HashMap<&'static str, &
         // Wallet messages
         en.insert("wallet_imported_success", "Wallet imported successfully for address");
         en.insert("import_private_key_failed", "Failed to import private key. Please check the format (Bech32 or Base64).");
+        en.insert("wallet_loaded_from_storage", "Wallet loaded from secure storage");
+        en.insert("private_key_save_failed", "Failed to save private key securely");
+        en.insert("private_key_load_failed", "Failed to load saved private key");
         en.insert("wallet_logged_out_message", "Wallet logged out. Import a key to begin.");
         // Balance messages
         en.insert("refreshing_balance", "Refreshing balance...");
@@ -177,6 +180,9 @@ fn init_translations() -> &'static HashMap<&'static str, HashMap<&'static str, &
         // Wallet messages
         zh.insert("wallet_imported_success", "钱包导入成功，地址为");
         zh.insert("import_private_key_failed", "导入私钥失败。请检查格式（Bech32 或 Base64）。");
+        zh.insert("wallet_loaded_from_storage", "从安全存储加载钱包");
+        zh.insert("private_key_save_failed", "私钥安全保存失败");
+        zh.insert("private_key_load_failed", "加载已保存的私钥失败");
         zh.insert("wallet_logged_out_message", "钱包已退出。请导入私钥以开始使用。");
         // Balance messages
         zh.insert("refreshing_balance", "正在刷新余额...");

@@ -31,3 +31,9 @@ logout_button: "Logout"
 language_label: "Language:"
 english: "English"
 chinese: "中文"
+
+# Private Key Storage
+wallet_loaded_from_storage: "Private key automatically loaded from encrypted storage"
+private_key_saved: "Private key automatically saved"
+private_key_save_failed: "Failed to save private key"
+private_key_load_failed: "Failed to load private key"

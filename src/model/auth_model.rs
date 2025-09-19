@@ -4,6 +4,11 @@ use argon2::{
     Argon2,
 };
 use argon2::password_hash::rand_core::OsRng;
+use aes_gcm::{
+    aead::{Aead, AeadCore, KeyInit, OsRng as AesOsRng},
+    Aes256Gcm, Nonce, Key
+};
+use base64::{Engine as _, engine::general_purpose};
 
 /// 认证状态
 #[derive(Debug, Clone)]
@@ -15,6 +20,10 @@ pub struct AuthState {
     pub password_hash: Option<String>,
     pub password_file: PathBuf,
     pub session_timeout: Option<std::time::Instant>,
+    // 私钥加密存储相关
+    pub encrypted_private_key_file: PathBuf,
+    // 会话中的临时密码（仅用于私钥加密保存）
+    session_password: Option<String>,
 }
 
 impl AuthState {
@@ -24,6 +33,9 @@ impl AuthState {
         cfg_dir.push("sui_rust_wallet");
         let mut password_file = cfg_dir.clone();
         password_file.push("password.hash");
+        
+        let mut encrypted_private_key_file = cfg_dir.clone();
+        encrypted_private_key_file.push("private_key.enc");
 
         let (is_first_run, password_hash) = match fs::read_to_string(&password_file) {
             Ok(s) if !s.trim().is_empty() => (false, Some(s)),
@@ -38,6 +50,8 @@ impl AuthState {
             password_hash,
             password_file,
             session_timeout: None,
+            encrypted_private_key_file,
+            session_password: None,
         }
     }
 
@@ -112,10 +126,27 @@ impl AuthState {
         match argon2.verify_password(attempt.as_bytes(), &parsed) {
             Ok(()) => {
                 self.is_authenticated = true;
+                // 保存会话密码用于私钥加密
+                self.session_password = Some(attempt.to_string());
                 Ok(true)
             }
             Err(_) => Ok(false),
         }
+    }
+
+    /// 获取会话密码（用于私钥加密）
+    pub fn get_session_password(&self) -> Option<&str> {
+        self.session_password.as_deref()
+    }
+
+    /// 设置会话密码
+    pub fn set_session_password(&mut self, password: String) {
+        self.session_password = Some(password);
+    }
+
+    /// 清除会话密码
+    pub fn clear_session_password(&mut self) {
+        self.session_password = None;
     }
 
     /// 检查会话是否过期
@@ -155,6 +186,7 @@ impl AuthState {
         self.is_authenticated = false;
         self.clear_password_inputs();
         self.clear_session_timeout();
+        self.clear_session_password();
     }
 
     /// 获取密码文件路径
@@ -165,6 +197,121 @@ impl AuthState {
     /// 检查密码文件是否存在
     pub fn password_file_exists(&self) -> bool {
         self.password_file.exists()
+    }
+
+    /// 保存加密的私钥
+    pub fn save_encrypted_private_key(&self, private_key: &str, password: &str) -> Result<(), String> {
+        // 使用密码生成加密密钥
+        let salt = SaltString::generate(&mut OsRng);
+        let argon2 = Argon2::default();
+        
+        // 生成 32 字节的密钥用于 AES-256
+        let mut key_bytes = [0u8; 32];
+        argon2.hash_password_into(password.as_bytes(), salt.as_str().as_bytes(), &mut key_bytes)
+            .map_err(|e| format!("Failed to derive key: {}", e))?;
+        
+        let key = Key::<Aes256Gcm>::from_slice(&key_bytes);
+        let cipher = Aes256Gcm::new(key);
+        
+        // 生成随机 nonce
+        let nonce = Aes256Gcm::generate_nonce(&mut AesOsRng);
+        
+        // 加密私钥
+        let ciphertext = cipher.encrypt(&nonce, private_key.as_bytes())
+            .map_err(|e| format!("Encryption failed: {}", e))?;
+        
+        // 组合数据：salt字符串 + "|" + nonce + ciphertext（base64编码）
+        let salt_str = salt.as_str();
+        let mut payload = Vec::new();
+        payload.extend_from_slice(&nonce);
+        payload.extend_from_slice(&ciphertext);
+        let payload_b64 = general_purpose::STANDARD.encode(payload);
+        
+        let data = format!("{}|{}", salt_str, payload_b64);
+        
+        // 确保存储目录存在并写入
+        if let Some(parent) = self.encrypted_private_key_file.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|e| format!("Failed to create directory: {}", e))?;
+        }
+        
+        fs::write(&self.encrypted_private_key_file, data)
+            .map_err(|e| format!("Failed to write encrypted private key: {}", e))?;
+        
+        Ok(())
+    }
+
+    /// 加载并解密私钥
+    pub fn load_encrypted_private_key(&self, password: &str) -> Result<Option<String>, String> {
+        // 检查文件是否存在
+        if !self.encrypted_private_key_file.exists() {
+            return Ok(None);
+        }
+        
+        // 读取文件
+        let file_data = fs::read_to_string(&self.encrypted_private_key_file)
+            .map_err(|e| format!("Failed to read encrypted private key file: {}", e))?;
+        
+        // 解析格式：salt|payload_b64
+        let parts: Vec<&str> = file_data.trim().split('|').collect();
+        if parts.len() != 2 {
+            return Err("Invalid encrypted data format".to_string());
+        }
+        
+        let salt_str = parts[0];
+        let payload_b64 = parts[1];
+        
+        // 重构 salt
+        let salt = SaltString::from_b64(salt_str)
+            .map_err(|e| format!("Invalid salt format: {}", e))?;
+        
+        // 解码 payload
+        let payload = general_purpose::STANDARD.decode(payload_b64)
+            .map_err(|e| format!("Failed to decode payload: {}", e))?;
+        
+        // payload 应该至少包含 nonce(12字节) + ciphertext(最少16字节)
+        if payload.len() < 28 {
+            return Err("Invalid payload format".to_string());
+        }
+        
+        // 提取 nonce (前12字节)
+        let nonce_bytes = &payload[0..12];
+        let nonce = Nonce::from_slice(nonce_bytes);
+        
+        // 提取密文
+        let ciphertext = &payload[12..];
+        
+        // 使用密码和 salt 重新生成密钥
+        let argon2 = Argon2::default();
+        let mut key_bytes = [0u8; 32];
+        argon2.hash_password_into(password.as_bytes(), salt.as_str().as_bytes(), &mut key_bytes)
+            .map_err(|e| format!("Failed to derive key: {}", e))?;
+        
+        let key = Key::<Aes256Gcm>::from_slice(&key_bytes);
+        let cipher = Aes256Gcm::new(key);
+        
+        // 解密
+        let plaintext = cipher.decrypt(nonce, ciphertext)
+            .map_err(|_| "Failed to decrypt private key (wrong password?)".to_string())?;
+        
+        let private_key = String::from_utf8(plaintext)
+            .map_err(|e| format!("Invalid UTF-8 in decrypted data: {}", e))?;
+        
+        Ok(Some(private_key))
+    }
+
+    /// 检查是否有保存的加密私钥
+    pub fn has_encrypted_private_key(&self) -> bool {
+        self.encrypted_private_key_file.exists()
+    }
+
+    /// 删除保存的加密私钥
+    pub fn delete_encrypted_private_key(&self) -> Result<(), String> {
+        if self.encrypted_private_key_file.exists() {
+            fs::remove_file(&self.encrypted_private_key_file)
+                .map_err(|e| format!("Failed to delete encrypted private key: {}", e))?;
+        }
+        Ok(())
     }
 }
 

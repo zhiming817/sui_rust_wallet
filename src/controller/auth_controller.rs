@@ -1,4 +1,5 @@
 use crate::model::{Model, WalletState};
+use crate::controller::WalletController;
 
 /// 认证控制器 - 处理登录、登出和密码验证相关功能
 pub struct AuthController;
@@ -6,6 +7,10 @@ pub struct AuthController;
 impl AuthController {
     /// 处理登出逻辑
     pub fn handle_logout(model: &mut Model) {
+        // 清理认证状态和会话密码
+        model.auth_state.logout();
+        
+        // 清理钱包状态
         model.wallet = WalletState::NoWallet {
             private_key_input: "".to_string(),
         };
@@ -24,6 +29,16 @@ impl AuthController {
         match model.verify_password(&attempt) {
             Ok(true) => {
                 model.auth_state.is_authenticated = true;
+                
+                // 设置会话密码，用于后续的加密操作
+                model.auth_state.set_session_password(attempt.clone());
+                
+                // 认证成功后，尝试加载保存的私钥
+                if let Err(e) = WalletController::try_load_saved_key(model, &attempt) {
+                    eprintln!("Failed to load saved private key: {}", e);
+                    // 不影响登录流程，用户可以手动导入
+                }
+                
                 Ok(())
             }
             Ok(false) => Err(model.i18n.tr("password_incorrect_error")),
@@ -33,7 +48,9 @@ impl AuthController {
 
     /// 处理密码验证
     pub fn handle_verify_password(model: &mut crate::model::Model) -> Result<(), String> {
-        Self::handle_login(model)
+        let result = Self::handle_login(model);
+        // 登录方法已经包含了自动加载私钥的逻辑
+        result
     }
 
     /// 检查是否已认证

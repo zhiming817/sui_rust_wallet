@@ -31,3 +31,9 @@ logout_button: "退出登录"
 language_label: "语言："
 english: "English"
 chinese: "中文"
+
+# Private Key Storage
+wallet_loaded_from_storage: "私钥已从加密存储自动加载"
+private_key_saved: "私钥已自动保存"
+private_key_save_failed: "私钥保存失败"
+private_key_load_failed: "私钥加载失败"
