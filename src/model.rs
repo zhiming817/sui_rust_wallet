@@ -56,7 +56,7 @@ impl Default for Model {
 
         Self {
             wallet: WalletState::default(),
-            network: Network::Devnet,
+            network: Network::Testnet,
             auth_state: AuthState::default(),
             app_state: AppState::default(),
             result_text: import_message,
